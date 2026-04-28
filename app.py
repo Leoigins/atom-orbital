@@ -1329,13 +1329,23 @@ def main():
                 default=default_labels,
                 key=f"manual_orbital_select_{symbol}",
             )
-            manual_keys = [option_map[label] for label in manual_selected]
+           manual_selected = st.multiselect(
+                "选择轨道",
+                options=list(option_map.keys()),
+                default=default_labels,
+                key=f"manual_orbital_select_{symbol}",
+            )
 
-            if set(manual_keys) != set(st.session_state.selected_orbital_keys):
+            if st.button("应用手动选择", key=f"apply_manual_{symbol}"):
+                manual_keys = [option_map[label] for label in manual_selected]
                 st.session_state.selected_orbital_keys = manual_keys
+
+                # 删除不再被选择的轨道颜色
                 for key in list(st.session_state.orbital_colors.keys()):
                     if key not in manual_keys:
                         st.session_state.orbital_colors.pop(key, None)
+
+                # 为新选择的轨道补充分配颜色
                 for key in manual_keys:
                     if key not in st.session_state.orbital_colors:
                         used = set(st.session_state.orbital_colors.values())
