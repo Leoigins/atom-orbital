@@ -715,7 +715,7 @@ def fig_contour(orb: dict, extent: float = None):
     ax.text(0.02, 0.02,
             "红色: 正值\n蓝色: 负值\n黑色虚线: 节面",
             transform=ax.transAxes, fontsize=8,
-            fontname='Noto Sans SC'
+            fontname='Noto Sans SC', 
             verticalalignment='bottom',
             bbox=dict(facecolor='white', alpha=0.75, edgecolor='gray'))
 
