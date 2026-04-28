@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
 from matplotlib.patches import Rectangle
 import numpy as np
 import plotly.graph_objects as go
@@ -26,13 +27,14 @@ from bunge_rhf_h_to_kr import (  # noqa: E402
     real_spherical_harmonic,
 )
 
-plt.rcParams['font.sans-serif'] = [
-    'Noto Sans CJK SC',
-    'Noto Sans CJK JP',
-    'SimHei',
-    'Microsoft YaHei',
-    'DejaVu Sans'
-]
+FONT_PATH = THIS_DIR / "NotoSansSC-Regular.ttf"
+
+if FONT_PATH.exists():
+    font_manager.fontManager.addfont(str(FONT_PATH))
+    plt.rcParams['font.sans-serif'] = ['Noto Sans SC', 'DejaVu Sans']
+else:
+    plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['mathtext.fontset'] = 'stix'
@@ -608,7 +610,7 @@ def fig_radial(selected_orbs: List[dict], mode: str,
 
     ax.set_xlabel(r"$r / a_0$", fontsize=11)
     ax.set_ylabel(ylabel, fontsize=11)
-    ax.set_title(title, fontsize=13)
+    ax.set_title(title, fontname='Noto Sans SC', fontsize=13)
     ax.set_xlim(x_min, x_max)
     if y_min is not None and y_max is not None:
         ax.set_ylim(y_min, y_max)
@@ -661,7 +663,7 @@ def fig_angular(orb: dict, squared: bool = False):
 
     ax.set_title(
         f"{title_kind}\n(${orb['latex_label']}$, {plane} 平面, {radius_note})",
-        fontsize=11
+        fontsize=11, fontname='Noto Sans SC'
     )
     fig.tight_layout()
     return fig
@@ -704,7 +706,7 @@ def fig_contour(orb: dict, extent: float = None):
     ax.set_aspect("equal")
     ax.set_title(
         f"轨道等值线图 {orb['label']} ({plane} 平面)",
-        fontfamily='Noto Sans CJK SC', fontsize=12
+        fontname='Noto Sans SC', fontsize=12
     )
     ax.set_xlabel(f"${labels[0]} / a_0$", fontsize=11)
     ax.set_ylabel(f"${labels[1]} / a_0$", fontsize=11)
@@ -713,6 +715,7 @@ def fig_contour(orb: dict, extent: float = None):
     ax.text(0.02, 0.02,
             "红色: 正值\n蓝色: 负值\n黑色虚线: 节面",
             transform=ax.transAxes, fontsize=8,
+            fontname='Noto Sans SC'
             verticalalignment='bottom',
             bbox=dict(facecolor='white', alpha=0.75, edgecolor='gray'))
 
