@@ -26,15 +26,8 @@ from bunge_rhf_h_to_kr import (  # noqa: E402
     real_spherical_harmonic,
 )
 
-plt.rcParams['font.sans-serif'] = [
-    'Noto Sans CJK SC',
-    'Noto Sans CJK JP',
-    'SimHei',
-    'Microsoft YaHei',
-    'DejaVu Sans',
-]
-plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['axes.unicode_minus'] = False
+plt.rcParams['font.sans-serif'] = ['SimSun', 'Arial Unicode MS', 'DejaVu Sans']
+plt.rcParams['font.family'] = 'serif'
 plt.rcParams['mathtext.fontset'] = 'stix'
 
 
@@ -1259,9 +1252,9 @@ def adaptive_plot_layout(plot_types: List[str], selected_orbs: List[dict]):
 # 主页面
 # ==========================================================================
 def main():
-    st.set_page_config(page_title="原子轨道可视化工具", layout="wide")
-    st.title("原子轨道可视化工具")
-    st.caption("Produced by Jinghao Wang and Haibei Li; Data source: Bunge RHF database")
+    st.set_page_config(page_title="前四周期原子轨道可视化", layout="wide")
+    st.title("原子电子组态与轨道可视化")
+    st.caption("左侧选择原子与信息，中间选择轨道，右侧显示可视化结果。数据源：Bunge RHF 数据库（H–Kr）。")
 
     supported = list_supported_elements()
     # 仅保留前四周期（Z ≤ 36）；如果数据库只到 Ar，则按原数据库范围
@@ -1329,23 +1322,14 @@ def main():
                 default=default_labels,
                 key=f"manual_orbital_select_{symbol}",
             )
-           manual_selected = st.multiselect(
-                "选择轨道",
-                options=list(option_map.keys()),
-                default=default_labels,
-                key=f"manual_orbital_select_{symbol}",
-            )
-
             if st.button("应用手动选择", key=f"apply_manual_{symbol}"):
                 manual_keys = [option_map[label] for label in manual_selected]
                 st.session_state.selected_orbital_keys = manual_keys
-
-                # 删除不再被选择的轨道颜色
+                
                 for key in list(st.session_state.orbital_colors.keys()):
                     if key not in manual_keys:
                         st.session_state.orbital_colors.pop(key, None)
-
-                # 为新选择的轨道补充分配颜色
+                
                 for key in manual_keys:
                     if key not in st.session_state.orbital_colors:
                         used = set(st.session_state.orbital_colors.values())
@@ -1353,6 +1337,7 @@ def main():
                         st.session_state.orbital_colors[key] = (
                             random.choice(avail) if avail else random.choice(COLOR_POOL)
                         )
+                        
                 st.rerun()
 
     with right:
