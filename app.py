@@ -597,18 +597,18 @@ def fig_radial(selected_orbs: List[dict], mode: str,
         # 采样点取 1200，保证核附近 R(r) 的剧烈变化（尤其是 n≥2 轨道的核区反冲）被细致捕捉
         r, R, R2, D = get_radial_arrays(orb["symbol"], orb["subshell"], x_min, x_max, npts=1200)
         if mode == "径向函数图 R(r)-r":
-            y, ylabel, title = R, r"$R(r)$", "Radial function graph R(r)"
+            y, ylabel, title = R, r"$R(r)$", "径向函数图 R(r)"
         elif mode == "径向密度函数图 R²(r)-r":
-            y, ylabel, title = R2, r"$R^2(r)$", "Radial density distribution graph R²(r)"
+            y, ylabel, title = R2, r"$R^2(r)$", "径向密度函数图 R²(r)"
         else:
-            y, ylabel, title = D, r"$D(r)=r^2 R^2(r)$", "Radial distribution graph D(r)"
+            y, ylabel, title = D, r"$D(r)=r^2 R^2(r)$", "径向分布函数图 D(r)"
 
         label = fr'${orb["symbol"]}\ {orb["latex_label"]}$'
         ax.plot(r, y, linewidth=2.0, label=label, color=color, alpha=0.9)
 
     ax.set_xlabel(r"$r / a_0$", fontsize=11)
     ax.set_ylabel(ylabel, fontsize=11)
-    ax.set_title(title, fontsize=13)
+    ax.set_title(title,  ,fontsize=13)
     ax.set_xlim(x_min, x_max)
     if y_min is not None and y_max is not None:
         ax.set_ylim(y_min, y_max)
