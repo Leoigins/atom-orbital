@@ -1322,24 +1322,21 @@ def main():
                 default=default_labels,
                 key=f"manual_orbital_select_{symbol}",
             )
-            
-            if st.button("应用手动选择", key=f"apply_manual_{symbol}"):
-               manual_keys = [option_map[label] for label in manual_selected]
-               st.session_state.selected_orbital_keys = manual_keys
+            manual_keys = [option_map[label] for label in manual_selected]
 
-               for key in list(st.session_state.orbital_colors.keys()):
-                   if key not in manual_keys:
-                       st.session_state.orbital_colors.pop(key, None)
-
-               for key in manual_keys:
-                   if key not in st.session_state.orbital_colors:
-                       used = set(st.session_state.orbital_colors.values())
-                       avail = [c for c in COLOR_POOL if c not in used]
-                       st.session_state.orbital_colors[key] = (
-                           random.choice(avail) if avail else random.choice(COLOR_POOL)
-                       )
-                      
-            st.rerun()
+            if set(manual_keys) != set(st.session_state.selected_orbital_keys):
+                st.session_state.selected_orbital_keys = manual_keys
+                for key in list(st.session_state.orbital_colors.keys()):
+                    if key not in manual_keys:
+                        st.session_state.orbital_colors.pop(key, None)
+                for key in manual_keys:
+                    if key not in st.session_state.orbital_colors:
+                        used = set(st.session_state.orbital_colors.values())
+                        avail = [c for c in COLOR_POOL if c not in used]
+                        st.session_state.orbital_colors[key] = (
+                            random.choice(avail) if avail else random.choice(COLOR_POOL)
+                        )
+                st.rerun()
 
     with right:
         st.subheader("可视化结果")
