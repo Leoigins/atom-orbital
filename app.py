@@ -158,7 +158,7 @@ def subshell_label(n: int, l: int) -> str:
     return f"{n}{L_LETTER[l]}"
 
 
-# ---------- 轨道符号统一函数 ----------
+# ---------- 轨道符号统一函数（移植自 _37 并扩展） ----------
 def get_orbital_symbol(n: int, l: int, m: int, style: str = "plain") -> str:
     """返回类似 2p_x, 3d_{z^2}, 4f_{xyz} 的轨道符号。style='plain' 给 Unicode 上下标，'latex' 给 LaTeX。"""
     subshell_map = {0: "s", 1: "p", 2: "d", 3: "f"}
@@ -220,7 +220,7 @@ def parse_orbital_key(key: str) -> Tuple[str, int, int, int]:
     return s, int(n), int(l), int(m)
 
 
-# ---------- 智能平面选择 ----------
+# ---------- 智能平面选择（完整版，移植自 _37） ----------
 def choose_plane(l: int, m: int) -> str:
     """为(l,m)挑选最能展现轨道形状的二维平面。"""
     if l == 0:
@@ -1254,7 +1254,7 @@ def adaptive_plot_layout(plot_types: List[str], selected_orbs: List[dict]):
 def main():
     st.set_page_config(page_title="前四周期原子轨道可视化", layout="wide")
     st.title("原子电子组态与轨道可视化")
-    st.caption("Produced by Wang Jinghao and Li Haibei, Data source: Bunge RHF database")
+    st.caption("左侧选择原子与信息，中间选择轨道，右侧显示可视化结果。数据源：Bunge RHF 数据库（H–Kr）。")
 
     supported = list_supported_elements()
     # 仅保留前四周期（Z ≤ 36）；如果数据库只到 Ar，则按原数据库范围
@@ -1316,19 +1316,27 @@ def main():
                 reverse_map[k] for k in st.session_state.selected_orbital_keys
                 if k in reverse_map
             ]
+            # 关键修复：备用 multiselect 只作为“输入框”，不能在每次 rerun 时自动覆盖
+            # st.session_state.selected_orbital_keys。
+            # 否则当右侧增加/删除图像类型触发 rerun 时，manual_selected 可能返回旧值或空值，
+            # 从而把已经点击选择的轨道清空。
             manual_selected = st.multiselect(
                 "选择轨道",
                 options=list(option_map.keys()),
                 default=default_labels,
                 key=f"manual_orbital_select_{symbol}",
             )
-            manual_keys = [option_map[label] for label in manual_selected]
 
-            if set(manual_keys) != set(st.session_state.selected_orbital_keys):
+            if st.button("应用手动选择", key=f"apply_manual_{symbol}"):
+                manual_keys = [option_map[label] for label in manual_selected]
                 st.session_state.selected_orbital_keys = manual_keys
+
+                # 删除不再被选择的轨道颜色
                 for key in list(st.session_state.orbital_colors.keys()):
                     if key not in manual_keys:
                         st.session_state.orbital_colors.pop(key, None)
+
+                # 为新选择的轨道补充分配颜色
                 for key in manual_keys:
                     if key not in st.session_state.orbital_colors:
                         used = set(st.session_state.orbital_colors.values())
@@ -1359,6 +1367,7 @@ def main():
             options=options,
             default=current_default,
             max_selections=4,
+            key="selected_plot_types_widget",
         )
         st.session_state.selected_plot_types = selected_plot_types
 
