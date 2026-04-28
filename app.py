@@ -1331,13 +1331,13 @@ def main():
                    if key not in manual_keys:
                        st.session_state.orbital_colors.pop(key, None)
 
-              for key in manual_keys:
-                  if key not in st.session_state.orbital_colors:
-                      used = set(st.session_state.orbital_colors.values())
-                      avail = [c for c in COLOR_POOL if c not in used]
-                      st.session_state.orbital_colors[key] = (
-                          random.choice(avail) if avail else random.choice(COLOR_POOL)
-                      )
+               for key in manual_keys:
+                   if key not in st.session_state.orbital_colors:
+                       used = set(st.session_state.orbital_colors.values())
+                       avail = [c for c in COLOR_POOL if c not in used]
+                       st.session_state.orbital_colors[key] = (
+                           random.choice(avail) if avail else random.choice(COLOR_POOL)
+                       )
                       
             st.rerun()
 
