@@ -1322,8 +1322,8 @@ def main():
                 default=default_labels,
                 key=f"manual_orbital_select_{symbol}",
             )
-
-           if st.button("应用手动选择", key=f"apply_manual_{symbol}"):
+            
+            if st.button("应用手动选择", key=f"apply_manual_{symbol}"):
                manual_keys = [option_map[label] for label in manual_selected]
                st.session_state.selected_orbital_keys = manual_keys
 
