@@ -1260,8 +1260,8 @@ def adaptive_plot_layout(plot_types: List[str], selected_orbs: List[dict]):
 # ==========================================================================
 def main():
     st.set_page_config(page_title="前四周期原子轨道可视化", layout="wide")
-    st.title("原子电子组态与轨道可视化")
-    st.caption("左侧选择原子与信息，中间选择轨道，右侧显示可视化结果。数据源：Bunge RHF 数据库（H–Kr）。")
+    st.title("原子轨道可视化")
+    st.caption("Produced by Jinghao Wang & Haibei Li; Data Source: Bunge RHF database")
 
     supported = list_supported_elements()
     # 仅保留前四周期（Z ≤ 36）；如果数据库只到 Ar，则按原数据库范围
