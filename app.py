@@ -608,7 +608,7 @@ def fig_radial(selected_orbs: List[dict], mode: str,
 
     ax.set_xlabel(r"$r / a_0$", fontsize=11)
     ax.set_ylabel(ylabel, fontsize=11)
-    ax.set_title(title,  ,fontsize=13)
+    ax.set_title(title, fontsize=13)
     ax.set_xlim(x_min, x_max)
     if y_min is not None and y_max is not None:
         ax.set_ylim(y_min, y_max)
