@@ -26,8 +26,15 @@ from bunge_rhf_h_to_kr import (  # noqa: E402
     real_spherical_harmonic,
 )
 
-plt.rcParams['font.sans-serif'] = ['SimSun', 'Arial Unicode MS', 'DejaVu Sans']
-plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.sans-serif'] = [
+    'Noto Sans CJK SC',
+    'Noto Sans CJK JP',
+    'SimHei',
+    'Microsoft YaHei',
+    'DejaVu Sans'
+]
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['mathtext.fontset'] = 'stix'
 
 
