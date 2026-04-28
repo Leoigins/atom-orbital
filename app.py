@@ -438,7 +438,7 @@ def evaluate_on_plane(symbol: str, n: int, l: int, m: int, plane: str = None,
     return A, B, psi, plane, labels, extent
 
 
-# ---------- 角向分布采样（移植自 _37，含平面自适应） ----------
+# ---------- 角向分布采样 ----------
 def sample_unit_circle_on_plane(plane: str, num: int = 720):
     """在给定平面的单位圆上取方向，换算成球坐标(theta, phi)。"""
     t = np.linspace(0, 2 * np.pi, num, endpoint=False)
@@ -608,7 +608,7 @@ def fig_radial(selected_orbs: List[dict], mode: str,
 
     ax.set_xlabel(r"$r / a_0$", fontsize=11)
     ax.set_ylabel(ylabel, fontsize=11)
-    ax.set_title(title, fontfamily='Noto Sans CJK SC', fontsize=13)
+    ax.set_title(title, fontsize=13)
     ax.set_xlim(x_min, x_max)
     if y_min is not None and y_max is not None:
         ax.set_ylim(y_min, y_max)
@@ -661,7 +661,7 @@ def fig_angular(orb: dict, squared: bool = False):
 
     ax.set_title(
         f"{title_kind}\n(${orb['latex_label']}$, {plane} 平面, {radius_note})",
-        fontfamily='Noto Sans CJK SC', fontsize=11
+        fontsize=11
     )
     fig.tight_layout()
     return fig
@@ -699,7 +699,7 @@ def fig_contour(orb: dict, extent: float = None):
                    linestyles='solid', linewidths=0.3, alpha=0.7)
 
     cbar = fig.colorbar(cf, ax=ax, shrink=0.9)
-    cbar.set_label('波函数值 ψ', fontfamily='SimSun', fontsize=10)
+    cbar.set_label('波函数值 ψ', fontsize=10)
 
     ax.set_aspect("equal")
     ax.set_title(
@@ -712,7 +712,7 @@ def fig_contour(orb: dict, extent: float = None):
 
     ax.text(0.02, 0.02,
             "红色: 正值\n蓝色: 负值\n黑色虚线: 节面",
-            transform=ax.transAxes, fontsize=8, fontfamily='SimSun',
+            transform=ax.transAxes, fontsize=8,
             verticalalignment='bottom',
             bbox=dict(facecolor='white', alpha=0.75, edgecolor='gray'))
 
@@ -787,7 +787,7 @@ def fig_surface(orb: dict):
     ))
 
     fig.update_layout(
-        title=f"轨道网格变形图  {orb['symbol']} {orb['label']}  ({plane} 平面, 缩放×{scale_factor:.2f})",
+        title=f"轨道网格变形图  {orb['symbol']} ${orb['latex_label']}$  ({plane} 平面, 缩放×{scale_factor:.2f})",
         scene=dict(
             xaxis_title=axis_labels['x'],
             yaxis_title=axis_labels['y'],
@@ -842,7 +842,7 @@ def fig_cloud(orb: dict, npts: int = 20000):
     ))
 
     fig.update_layout(
-        title=f"电子云图 |ψ|²  {orb['symbol']} {orb['label']}  (保留 {len(xk)} 点)",
+        title=f"电子云图 |ψ|²  {orb['symbol']} ${orb['latex_label']}$  (保留 {len(xk)} 点)",
         scene=dict(
             xaxis_title='x / a₀',
             yaxis_title='y / a₀',
