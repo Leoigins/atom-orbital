@@ -165,7 +165,7 @@ def subshell_label(n: int, l: int) -> str:
     return f"{n}{L_LETTER[l]}"
 
 
-# ---------- 轨道符号统一函数（移植自 _37 并扩展） ----------
+# ---------- 轨道符号统一函数 ----------
 def get_orbital_symbol(n: int, l: int, m: int, style: str = "plain") -> str:
     """返回类似 2p_x, 3d_{z^2}, 4f_{xyz} 的轨道符号。style='plain' 给 Unicode 上下标，'latex' 给 LaTeX。"""
     subshell_map = {0: "s", 1: "p", 2: "d", 3: "f"}
@@ -227,7 +227,7 @@ def parse_orbital_key(key: str) -> Tuple[str, int, int, int]:
     return s, int(n), int(l), int(m)
 
 
-# ---------- 智能平面选择（完整版，移植自 _37） ----------
+# ---------- 智能平面选择 ----------
 def choose_plane(l: int, m: int) -> str:
     """为(l,m)挑选最能展现轨道形状的二维平面。"""
     if l == 0:
@@ -608,7 +608,7 @@ def fig_radial(selected_orbs: List[dict], mode: str,
 
     ax.set_xlabel(r"$r / a_0$", fontsize=11)
     ax.set_ylabel(ylabel, fontsize=11)
-    ax.set_title(title, fontfamily='SimSun', fontsize=13)
+    ax.set_title(title, fontfamily='Noto Sans CJK SC', fontsize=13)
     ax.set_xlim(x_min, x_max)
     if y_min is not None and y_max is not None:
         ax.set_ylim(y_min, y_max)
@@ -661,7 +661,7 @@ def fig_angular(orb: dict, squared: bool = False):
 
     ax.set_title(
         f"{title_kind}\n(${orb['latex_label']}$, {plane} 平面, {radius_note})",
-        fontfamily='SimSun', fontsize=11
+        fontfamily='Noto Sans CJK SC', fontsize=11
     )
     fig.tight_layout()
     return fig
@@ -704,7 +704,7 @@ def fig_contour(orb: dict, extent: float = None):
     ax.set_aspect("equal")
     ax.set_title(
         f"轨道等值线图 ${orb['latex_label']}$ ({plane} 平面)",
-        fontfamily='SimSun', fontsize=12
+        fontfamily='Noto Sans CJK SC', fontsize=12
     )
     ax.set_xlabel(f"${labels[0]} / a_0$", fontsize=11)
     ax.set_ylabel(f"${labels[1]} / a_0$", fontsize=11)
