@@ -158,7 +158,7 @@ def subshell_label(n: int, l: int) -> str:
     return f"{n}{L_LETTER[l]}"
 
 
-# ---------- 轨道符号统一函数（移植自 _37 并扩展） ----------
+# ---------- 轨道符号统一函数 ----------
 def get_orbital_symbol(n: int, l: int, m: int, style: str = "plain") -> str:
     """返回类似 2p_x, 3d_{z^2}, 4f_{xyz} 的轨道符号。style='plain' 给 Unicode 上下标，'latex' 给 LaTeX。"""
     subshell_map = {0: "s", 1: "p", 2: "d", 3: "f"}
@@ -220,7 +220,7 @@ def parse_orbital_key(key: str) -> Tuple[str, int, int, int]:
     return s, int(n), int(l), int(m)
 
 
-# ---------- 智能平面选择（完整版，移植自 _37） ----------
+# ---------- 智能平面选择 ----------
 def choose_plane(l: int, m: int) -> str:
     """为(l,m)挑选最能展现轨道形状的二维平面。"""
     if l == 0:
@@ -1254,7 +1254,7 @@ def adaptive_plot_layout(plot_types: List[str], selected_orbs: List[dict]):
 def main():
     st.set_page_config(page_title="前四周期原子轨道可视化", layout="wide")
     st.title("原子电子组态与轨道可视化")
-    st.caption("左侧选择原子与信息，中间选择轨道，右侧显示可视化结果。数据源：Bunge RHF 数据库（H–Kr）。")
+    st.caption("Produced by Wang Jinghao and Li Haibei, Data source: Bunge RHF database")
 
     supported = list_supported_elements()
     # 仅保留前四周期（Z ≤ 36）；如果数据库只到 Ar，则按原数据库范围
