@@ -703,7 +703,7 @@ def fig_contour(orb: dict, extent: float = None):
 
     ax.set_aspect("equal")
     ax.set_title(
-        f"轨道等值线图 ${orb['latex_label']}$ ({plane} 平面)",
+        f"轨道等值线图 {orb['label']} ({plane} 平面)",
         fontfamily='Noto Sans CJK SC', fontsize=12
     )
     ax.set_xlabel(f"${labels[0]} / a_0$", fontsize=11)
@@ -787,7 +787,7 @@ def fig_surface(orb: dict):
     ))
 
     fig.update_layout(
-        title=f"轨道网格变形图  {orb['symbol']} ${orb['latex_label']}$  ({plane} 平面, 缩放×{scale_factor:.2f})",
+        title=f"轨道网格变形图  {orb['symbol']} {orb['label']}  ({plane} 平面, 缩放×{scale_factor:.2f})",
         scene=dict(
             xaxis_title=axis_labels['x'],
             yaxis_title=axis_labels['y'],
