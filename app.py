@@ -631,7 +631,7 @@ def fig_angular(orb: dict, squared: bool = False):
     )
 
     lim = 1.1
-    fig, ax = plt.subplots(figsize=(5.0, 5.0))
+    fig, ax = plt.subplots(figsize=(4.0, 4.0))
 
     square = Rectangle((-lim, -lim), 2 * lim, 2 * lim,
                        facecolor='white', edgecolor='lightgray', lw=1.0, zorder=0)
@@ -650,7 +650,7 @@ def fig_angular(orb: dict, squared: bool = False):
     ax.set_xlim(-lim, lim)
     ax.set_ylim(-lim, lim)
     ax.set_aspect("equal")
-    ax.tick_params(axis='both', labelsize=5)
+    ax.tick_params(axis='both', labelsize=7.5)
     ax.set_xlabel(f"${labels[0]}$", fontsize=5)
     ax.set_ylabel(f"${labels[1]}$", fontsize=5)
 
