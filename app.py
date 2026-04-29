@@ -651,8 +651,8 @@ def fig_angular(orb: dict, squared: bool = False):
     ax.set_ylim(-lim, lim)
     ax.set_aspect("equal")
 
-    ax.set_xlabel(f"${labels[0]}$", fontsize=11)
-    ax.set_ylabel(f"${labels[1]}$", fontsize=11)
+    ax.set_xlabel(f"${labels[0]}$", fontsize=5)
+    ax.set_ylabel(f"${labels[1]}$", fontsize=5)
 
     if squared:
         title_kind = r"电子云角向分布 $|Y_l^m(\theta,\phi)|^2$"
@@ -706,8 +706,8 @@ def fig_contour(orb: dict, extent: float = None):
         f"轨道等值线图",
         fontname='Noto Sans SC', fontsize=8
     )
-    ax.set_xlabel(f"${labels[0]} / a_0$", fontsize=11)
-    ax.set_ylabel(f"${labels[1]} / a_0$", fontsize=11)
+    ax.set_xlabel(f"${labels[0]} / a_0$", fontsize=5)
+    ax.set_ylabel(f"${labels[1]} / a_0$", fontsize=5)
     ax.grid(True, linestyle=':', alpha=0.5)
 
     ax.text(0.02, 0.02,
