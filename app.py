@@ -631,7 +631,7 @@ def fig_angular(orb: dict, squared: bool = False):
     )
 
     lim = 1.1
-    fig, ax = plt.subplots(figsize=(3.0, 3.0), dpi=90)
+    fig, ax = plt.subplots(figsize=(7.0, 5.0))
 
     square = Rectangle((-lim, -lim), 2 * lim, 2 * lim,
                        facecolor='white', edgecolor='lightgray', lw=1.0, zorder=0)
@@ -675,7 +675,7 @@ def fig_contour(orb: dict, extent: float = None):
     )
     psi_real = np.real(psi)
 
-    fig, ax = plt.subplots(figsize=(5.0, 5.0), dpi=90)
+    fig, ax = plt.subplots(figsize=(7.0, 5.0))
     vmax = np.max(np.abs(psi_real))
     if vmax < 1e-12:
         vmax = 1e-12
