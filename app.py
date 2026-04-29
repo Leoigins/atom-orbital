@@ -993,32 +993,57 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
     e_min, e_max = min(energies), max(energies)
     e_pad = max((e_max - e_min) * 0.12, 0.8)
 
-    # ====== 智能检测大能量间隙并构建坐标变换（断轴/压缩） ======
-    # 规则：相邻 subshell 之间的间隙若超过总跨度的 GAP_THRESHOLD_RATIO，
-    # 则将该间隙在显示坐标上压缩 COMPRESS_RATIO（默认 96%）。
-    COMPRESS_RATIO = 0.96        # 压缩 96%，仅保留 4% 视觉间距，折叠区段更紧凑
+    # ====== 智能检测大能量间隙并构建坐标变换（断轴/折叠） ======
+    # 策略：每个被识别为大间隙的区间，在变换后被替换为一个"固定视觉宽度"，
+    # 而不是按原间隙的某个百分比压缩。这样不论原间隙是 40 Eh 还是 400 Eh，
+    # 折叠后在画布中占的空间都一样紧凑，避免了"原间隙越大、折叠区仍越宽"的问题。
     GAP_THRESHOLD_RATIO = 0.05   # 间隙占总跨度比例超过 5% 即压缩，可同时折叠多个大间隙
+    GAP_VISUAL_FACTOR = 1.5      # 折叠区视觉宽度 = 上层最小真实间距 × 此倍数
 
     total_span = e_max - e_min if e_max > e_min else 1.0
     gap_threshold = total_span * GAP_THRESHOLD_RATIO
 
-    # 找出所有需要压缩的间隙区间 [(low, high), ...]，按真实能量从低到高排序
+    # 找出所有需要压缩的间隙区间 [(low, high), ...]
     breaks = []
     for i in range(len(energies) - 1):
         gap = energies[i + 1] - energies[i]
         if gap > gap_threshold:
-            margin = gap * 0.05  # 两端各留 5% 边距，避免紧贴轨道
-            breaks.append((energies[i] + margin, energies[i + 1] - margin))
+            breaks.append((energies[i], energies[i + 1]))
+
+    # 计算"上层最小真实间距"——用最高一个断点之上的能级，作为折叠区视觉宽度的基准
+    if breaks:
+        cutoff_real = breaks[-1][1]
+        upper_real = [e for e in energies if e >= cutoff_real]
+    else:
+        upper_real = list(energies)
+    if len(upper_real) >= 2:
+        upper_diffs = [upper_real[i + 1] - upper_real[i] for i in range(len(upper_real) - 1)]
+        positive_diffs = [d for d in upper_diffs if d > 1e-9]
+        upper_min_real = min(positive_diffs) if positive_diffs else total_span * 0.05
+    else:
+        upper_min_real = total_span * 0.05
+
+    # 每个折叠区在变换后统一具有的视觉宽度
+    target_visual_gap = upper_min_real * GAP_VISUAL_FACTOR
 
     def transform(e: float) -> float:
-        """将真实能量映射到显示坐标（压缩 break 区间）。"""
+        """将真实能量映射到显示坐标（每个 break 区间替换为固定视觉宽度）。"""
         y = e
         for low, high in breaks:
+            real_gap = high - low
+            if real_gap <= target_visual_gap:
+                continue  # 原间隙比目标视觉宽度还小，无需压缩
             if e >= high:
-                y -= (high - low) * COMPRESS_RATIO
+                # 完全跨过此断点：扣减 "原间隙 - 目标视觉宽度"
+                y -= (real_gap - target_visual_gap)
             elif e > low:
-                # 落在 break 区间内（一般不会有轨道在这里），线性压缩
-                y -= (e - low) * COMPRESS_RATIO
+                # 落在断点内（一般无能级），线性映射到目标视觉宽度内
+                frac = (e - low) / real_gap
+                y = low + frac * target_visual_gap + sum(
+                    -(h2 - l2 - target_visual_gap)
+                    for l2, h2 in breaks
+                    if h2 <= low and (h2 - l2) > target_visual_gap
+                )
         return y
 
     # 各项坐标的变换后值
@@ -1026,22 +1051,11 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
     e_min_t = transform(e_min)
     e_max_t = transform(e_max)
 
-    # 计算"上层"（处于断点之上的能级）之间的最小变换间距，用于自适应方框高度。
-    # 若有断点，"上层"指最高断点 high 之上的所有能级；否则为全部能级。
-    if breaks:
-        cutoff_high = max(high for _, high in breaks)
-        upper_t = [et for e, et in zip(energies, energies_t) if e >= cutoff_high]
-    else:
-        upper_t = list(energies_t)
-    if len(upper_t) >= 2:
-        diffs = [upper_t[i + 1] - upper_t[i] for i in range(len(upper_t) - 1)]
-        upper_min_gap_t = min(d for d in diffs if d > 1e-9) if any(d > 1e-9 for d in diffs) else (e_max_t - e_min_t)
-    else:
-        upper_min_gap_t = e_max_t - e_min_t if e_max_t > e_min_t else 0.5
+    # 上层最小变换间距（用于方框高度自适应）：
+    # 由于上层未被压缩，这个值等于 upper_min_real
+    upper_min_gap_t = upper_min_real if upper_real and len(upper_real) >= 2 else (e_max_t - e_min_t if e_max_t > e_min_t else 0.5)
 
-    # Y 轴留白：保证上层有足够的视觉展开空间。
-    # 取"变换跨度的 12%"和"上层最小间距的 3 倍"中的较大者，
-    # 这样即使变换后总跨度被压缩得很小，画布也不会塌缩。
+    # Y 轴留白：保证上层有足够的视觉展开空间
     e_pad_t = max((e_max_t - e_min_t) * 0.12, upper_min_gap_t * 3.0, 0.08)
 
     fig = go.Figure()
@@ -1088,20 +1102,21 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
     # ====== 在每个被压缩的间隙处绘制双斜线断轴标记 ======
     axis_span = y1_axis - y0_axis
     slash_dx = 0.035                          # 斜线水平半宽（X 方向，无需自适应）
-    # 默认斜线尺寸（用于较宽的折叠区）
-    default_slash_dy = axis_span * 0.018
-    default_slash_offset = axis_span * 0.014
 
     for low, high in breaks:
-        y_break = transform((low + high) / 2)
-        # 折叠区在变换坐标系中实际剩余的视觉宽度
+        # 折叠区在变换坐标系中的实际可视宽度
         gap_visual = transform(high) - transform(low)
+        if gap_visual <= 0:
+            continue
+        y_break = (transform(low) + transform(high)) / 2  # 折叠区的视觉中点
 
-        # 让双斜线和遮挡矩形不超过折叠区实际高度的 ~80%，
-        # 避免在很窄的折叠区斜线戳到上下相邻的能级线。
-        max_total_height = gap_visual * 0.80
-        slash_dy = min(default_slash_dy, max_total_height * 0.30)
-        slash_offset = min(default_slash_offset, max_total_height * 0.30)
+        # 双斜线和遮挡矩形的总高度不超过折叠区高度的 70%
+        max_total_height = gap_visual * 0.70
+        # 默认尺寸（折叠区较宽时使用）
+        default_dy = axis_span * 0.018
+        default_offset = axis_span * 0.014
+        slash_dy = min(default_dy, max_total_height * 0.30)
+        slash_offset = min(default_offset, max_total_height * 0.30)
 
         # 用白色矩形遮挡这一段纵轴
         fig.add_shape(
@@ -1130,9 +1145,11 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
     x_start = {0: -0.76, 1: -0.48, 2: -0.15, 3: 0.18}
     box_w = 0.095
     # 方框高度自适应：必须小于"上层最小变换间距"，否则上层方框互相穿插重叠。
-    # 取上层最小间距的 40%，且不超过 0.055（避免在间距特别大时方框过高）。
-    box_h = min(0.055, upper_min_gap_t * 0.40)
-    box_h = max(box_h, 0.012)  # 下限，保证方框不会消失
+    # 取上层最小间距的 40%，并以 Y 轴跨度的 ~3% 作为绝对下限，
+    # 这样不论 Y 轴跨度是 0.3 Eh 还是 30 Eh，方框都不会缩成一根线。
+    axis_span_t = (y1_axis - y0_axis) if (y1_axis - y0_axis) > 0 else 1.0
+    box_h = min(upper_min_gap_t * 0.40, axis_span_t * 0.05)
+    box_h = max(box_h, axis_span_t * 0.015)  # 下限：占 Y 轴 ~1.5%
     gap = 0.030
 
     click_x, click_y, click_text, click_customdata = [], [], [], []
