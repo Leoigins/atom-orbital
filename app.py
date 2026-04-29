@@ -56,6 +56,23 @@ M_ORDER_REAL = {0: [0], 1: [0, 1, -1], 2: [0, 1, -1, 2, -2], 3: [0, 1, -1, 2, -2
 COLOR_POOL = [
     'black', 'darkred', 'saddlebrown', 'darkgreen', 'darkblue',
     'darkviolet', ]
+def assign_orbital_color(key: str):
+    """
+    为新轨道分配稳定且尽量不重复的颜色。
+    """
+    if key in st.session_state.orbital_colors:
+        return st.session_state.orbital_colors[key]
+
+    used = set(st.session_state.orbital_colors.values())
+    for color in COLOR_POOL:
+        if color not in used:
+            st.session_state.orbital_colors[key] = color
+            return color
+
+    # 如果颜色池用完，再循环使用
+    color = COLOR_POOL[len(st.session_state.orbital_colors) % len(COLOR_POOL)]
+    st.session_state.orbital_colors[key] = color
+    return color
 
 SINGLE_PLOT_TYPES = [
     "径向函数图 R(r)-r",
@@ -1538,10 +1555,15 @@ def main():
     with right:
         st.subheader("可视化结果")
         selected_records = [r for r in records if r["key"] in st.session_state.selected_orbital_keys]
-        # 附加颜色
+        
+        selected_keys_now = {r["key"] for r in selected_records}
+        for key in list(st.session_state.orbital_colors.keys()):
+            if key not in selected_keys_now:
+                st.session_state.orbital_colors.pop(key, None)
+                
         for r in selected_records:
-            r["color"] = st.session_state.orbital_colors.get(r["key"])
-
+            r["color"] = assign_orbital_color(r["key"])
+        
         if not selected_records:
             st.info("请先在中间栏至少选择一个轨道。")
             return
