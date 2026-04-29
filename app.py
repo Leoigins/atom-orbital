@@ -631,7 +631,7 @@ def fig_angular(orb: dict, squared: bool = False):
     )
 
     lim = 1.1
-    fig, ax = plt.subplots(figsize=(4.0, 4.0), dpi=85)
+    fig, ax = plt.subplots(figsize=(3.0, 3.0), dpi=85)
 
     square = Rectangle((-lim, -lim), 2 * lim, 2 * lim,
                        facecolor='white', edgecolor='lightgray', lw=1.0, zorder=0)
@@ -651,8 +651,8 @@ def fig_angular(orb: dict, squared: bool = False):
     ax.set_ylim(-lim, lim)
     ax.set_aspect("equal")
     ax.tick_params(axis='both', labelsize=5)
-    ax.set_xlabel(f"${labels[0]}$", fontsize=11)
-    ax.set_ylabel(f"${labels[1]}$", fontsize=11)
+    ax.set_xlabel(f"${labels[0]}$", fontsize=5)
+    ax.set_ylabel(f"${labels[1]}$", fontsize=5)
 
     if squared:
         title_kind = r"电子云角向分布 $|Y_l^m(\theta,\phi)|^2$"
