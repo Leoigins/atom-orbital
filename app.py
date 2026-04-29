@@ -591,7 +591,7 @@ def fig_radial(selected_orbs: List[dict], mode: str,
                x_min: float = 0.0, x_max: float = 10.0,
                y_min: float = None, y_max: float = None):
     """径向相关图像：R(r), R²(r), D(r) = r²R²。支持多轨道叠加比较。"""
-    fig, ax = plt.subplots(figsize=(6.0, 3.0))
+    fig, ax = plt.subplots(figsize=(7.0, 5.0))
 
     ylabel, title = "", ""
     for i, orb in enumerate(selected_orbs):
