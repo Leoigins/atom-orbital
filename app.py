@@ -569,7 +569,7 @@ def sample_cloud(symbol: str, n: int, l: int, m: int, npts: int = 20000):
     y = r_samp * sin_t * np.sin(phi_samp)
     z = r_samp * np.cos(theta_samp)
 
-    # --- 计算对应 |ψ|² 值（用于颜色映射）---
+    # --- 计算对应 |Y|² 值（用于颜色映射）---
     psi = orbital_wavefunction(symbol, sub, m, r_samp, theta_samp, phi_samp, real_form=True)
     prob = psi ** 2
 
@@ -677,7 +677,7 @@ def fig_contour(orb: dict, extent: float = None):
     )
     psi_real = np.real(psi)
 
-    fig, ax = plt.subplots(figsize=(6.5, 5.5))
+    fig, ax = plt.subplots(figsize=(4.0, 4.0))
     vmax = np.max(np.abs(psi_real))
     if vmax < 1e-12:
         vmax = 1e-12
@@ -926,24 +926,24 @@ def draw_plot(plot_type: str, selected_orbs: List[dict], plot_prefix: str = ""):
     orb = selected_orbs[0]
     if plot_type == "原子轨道角度分布图 |Y|-角度":
         fig = fig_angular(orb, squared=False)
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig)
         plt.close(fig)
     elif plot_type == "电子云角度分布图 |Y|²-角度":
         fig = fig_angular(orb, squared=True)
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig)
         plt.close(fig)
     elif plot_type == "原子轨道等值线图":
         fig = fig_contour(orb)
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig)
         plt.close(fig)
     elif plot_type == "原子轨道网格图":
         fig = fig_surface(orb)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
     elif plot_type == "电子云黑点图":
         npts = st.slider("采样点数", 5000, 60000, 20000, step=5000,
                          key=f"{plot_prefix}_cloud_npts")
         fig = fig_cloud(orb, npts=npts)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
 
 
 def render_energy_diagram(records: List[dict], selected_keys: List[str]):
