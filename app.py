@@ -631,7 +631,7 @@ def fig_angular(orb: dict, squared: bool = False):
     )
 
     lim = 1.1
-    fig, ax = plt.subplots(figsize=(7.0, 5.0))
+    fig, ax = plt.subplots(figsize=(7.0, 5.0), dpi=85)
 
     square = Rectangle((-lim, -lim), 2 * lim, 2 * lim,
                        facecolor='white', edgecolor='lightgray', lw=1.0, zorder=0)
@@ -661,7 +661,7 @@ def fig_angular(orb: dict, squared: bool = False):
 
     ax.set_title(
         f"{title_kind}",
-        fontsize=11, fontname='Noto Sans SC'
+        fontsize=8, fontname='Noto Sans SC'
     )
     fig.tight_layout()
     return fig
@@ -675,7 +675,7 @@ def fig_contour(orb: dict, extent: float = None):
     )
     psi_real = np.real(psi)
 
-    fig, ax = plt.subplots(figsize=(7.0, 5.0))
+    fig, ax = plt.subplots(figsize=(7.0, 5.0), dpi=85)
     vmax = np.max(np.abs(psi_real))
     if vmax < 1e-12:
         vmax = 1e-12
@@ -699,12 +699,12 @@ def fig_contour(orb: dict, extent: float = None):
                    linestyles='solid', linewidths=0.3, alpha=0.7)
 
     cbar = fig.colorbar(cf, ax=ax, shrink=0.9)
-    cbar.set_label('波函数值 ψ', fontsize=10)
+    cbar.set_label('波函数值 ψ', fontsize=8)
 
     ax.set_aspect("equal")
     ax.set_title(
-        f"轨道等值线图 {orb['label']} ({plane} 平面)",
-        fontname='Noto Sans SC', fontsize=12
+        f"轨道等值线图",
+        fontname='Noto Sans SC', fontsize=8
     )
     ax.set_xlabel(f"${labels[0]} / a_0$", fontsize=11)
     ax.set_ylabel(f"${labels[1]} / a_0$", fontsize=11)
@@ -712,7 +712,7 @@ def fig_contour(orb: dict, extent: float = None):
 
     ax.text(0.02, 0.02,
             "红色: 正值\n蓝色: 负值\n黑色虚线: 节面",
-            transform=ax.transAxes, fontsize=8,
+            transform=ax.transAxes, fontsize=5,
             fontname='Noto Sans SC', 
             verticalalignment='bottom',
             bbox=dict(facecolor='white', alpha=0.75, edgecolor='gray'))
