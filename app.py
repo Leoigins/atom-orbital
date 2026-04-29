@@ -591,7 +591,7 @@ def fig_radial(selected_orbs: List[dict], mode: str,
                x_min: float = 0.0, x_max: float = 10.0,
                y_min: float = None, y_max: float = None):
     """径向相关图像：R(r), R²(r), D(r) = r²R²。支持多轨道叠加比较。"""
-    fig, ax = plt.subplots(figsize=(4.0, 4.0))
+    fig, ax = plt.subplots(figsize=(6.0, 3.0))
 
     ylabel, title = "", ""
     for i, orb in enumerate(selected_orbs):
@@ -631,7 +631,7 @@ def fig_angular(orb: dict, squared: bool = False):
     )
 
     lim = 1.1
-    fig, ax = plt.subplots(figsize=(4.0, 4.0))
+    fig, ax = plt.subplots(figsize=(3.0, 3.0))
 
     square = Rectangle((-lim, -lim), 2 * lim, 2 * lim,
                        facecolor='white', edgecolor='lightgray', lw=1.0, zorder=0)
@@ -677,7 +677,7 @@ def fig_contour(orb: dict, extent: float = None):
     )
     psi_real = np.real(psi)
 
-    fig, ax = plt.subplots(figsize=(4.0, 4.0))
+    fig, ax = plt.subplots(figsize=(3.0, 3.0))
     vmax = np.max(np.abs(psi_real))
     if vmax < 1e-12:
         vmax = 1e-12
