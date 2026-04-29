@@ -1141,18 +1141,22 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
                 layer="above",
             )
 
-    # 轨道方框横向位置。不同 l 略错开，同一 subshell 中的简并轨道展开。
+    # 轨道方块横向位置。不同 l 略错开，同一 subshell 中的简并轨道横向展开。
+    # 注意：方块本身用 Scatter marker 绘制，大小是屏幕像素，不再需要 box_h。
     x_start = {0: -0.76, 1: -0.48, 2: -0.15, 3: 0.18}
-    box_w = 0.095
-    # 方框高度自适应：必须小于"上层最小变换间距"，否则上层方框互相穿插重叠。
-    # 取上层最小间距的 40%，并以 Y 轴跨度的 ~3% 作为绝对下限，
-    # 这样不论 Y 轴跨度是 0.3 Eh 还是 30 Eh，方框都不会缩成一根线。
-    axis_span_t = (y1_axis - y0_axis) if (y1_axis - y0_axis) > 0 else 1.0
-    box_h = min(upper_min_gap_t * 0.40, axis_span_t * 0.05)
-    box_h = max(box_h, axis_span_t * 0.015)  # 下限：占 Y 轴 ~1.5%
+    box_w = 0.095   # 同一 subshell 内相邻轨道中心之间的横向距离基准（数据坐标）
     gap = 0.030
 
     click_x, click_y, click_text, click_customdata = [], [], [], []
+    # 收集每个轨道方块的样式参数（用 Scatter marker 绘制，保证屏幕像素级正方形）
+    marker_colors = []        # 边框颜色
+    marker_line_widths = []   # 边框宽度
+    marker_fill_colors = []   # 填充颜色
+    marker_symbols = []       # 'square' (占据/选中) 或 'square-open' (未占据)
+    marker_sizes = []         # 像素大小
+
+    BOX_PIXEL_SIZE = 18       # 方块在屏幕上的边长（像素），始终保持正方形
+    BOX_PIXEL_SIZE_SELECTED = 22  # 选中时稍大
 
     for g, energy_t in zip(groups, energies_t):
         n = g["n"]
@@ -1189,41 +1193,38 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
         )
 
         for i, rec in enumerate(members):
-            bx0 = x0 + i * (box_w + gap)
-            bx1 = bx0 + box_w
-            by0 = energy_t - box_h / 2
-            by1 = energy_t + box_h / 2
+            # 方块的中心横坐标（沿用原 x_start + box_w + gap 的布局）
+            bx_center = x0 + i * (box_w + gap) + box_w / 2
 
             selected = rec["key"] in selected_keys
             occupied = rec["occupied"]
 
-            line_style = dict(
-                color="#d62728" if selected else color,
-                width=3.2 if selected else 1.7,
-                dash="solid" if occupied else "dot",
-            )
-            fill = (
-                "rgba(214,95,158,0.13)" if n == 1 else
-                "rgba(88,185,127,0.13)" if n == 2 else
-                "rgba(255,107,107,0.13)" if n == 3 else
-                "rgba(77,157,224,0.13)"
-            )
-            if not occupied:
-                fill = "rgba(220,220,220,0.06)"
+            # 选中：红色加粗边框 + 稍大；占据：实心；未占据：空心
+            edge_color = "#d62728" if selected else color
+            edge_width = 3.0 if selected else 1.7
+            size_px = BOX_PIXEL_SIZE_SELECTED if selected else BOX_PIXEL_SIZE
 
-            fig.add_shape(
-                type="rect",
-                x0=bx0, x1=bx1,
-                y0=by0, y1=by1,
-                line=line_style,
-                fillcolor=fill,
-                layer="above",
-            )
+            if occupied:
+                symbol = "square"
+                fill_color = (
+                    "rgba(214,95,158,0.55)" if n == 1 else
+                    "rgba(88,185,127,0.55)" if n == 2 else
+                    "rgba(255,107,107,0.55)" if n == 3 else
+                    "rgba(77,157,224,0.55)"
+                )
+            else:
+                # 未占据：空心方块（marker 内部透明，仅显示边框）
+                symbol = "square-open"
+                fill_color = "rgba(0,0,0,0)"
 
-            cx = (bx0 + bx1) / 2
-            cy = energy_t  # 点击点用变换后坐标
-            click_x.append(cx)
-            click_y.append(cy)
+            marker_symbols.append(symbol)
+            marker_colors.append(edge_color)
+            marker_line_widths.append(edge_width)
+            marker_fill_colors.append(fill_color)
+            marker_sizes.append(size_px)
+
+            click_x.append(bx_center)
+            click_y.append(energy_t)
             click_text.append(rec["label"])
             click_customdata.append([
                 rec["key"],
@@ -1232,12 +1233,22 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
                 "已占据" if occupied else "未占据",
             ])
 
-    # 透明但可点击的 marker。点击事件由 st.plotly_chart(..., on_select="rerun") 捕获。
+    # 用 Scatter marker 绘制轨道方块。
+    # 关键：marker.size 单位是屏幕像素，因此方块在任何屏幕尺寸/缩放级别下都保持像素级正方形，
+    # 不受坐标系、Y 轴跨度的影响。同时该 trace 也承担点击事件的捕获。
     fig.add_trace(go.Scatter(
         x=click_x,
         y=click_y,
         mode="markers",
-        marker=dict(size=24, color="rgba(0,0,0,0.001)", line=dict(width=0)),
+        marker=dict(
+            size=marker_sizes,
+            symbol=marker_symbols,
+            color=marker_fill_colors,
+            line=dict(
+                color=marker_colors,
+                width=marker_line_widths,
+            ),
+        ),
         text=click_text,
         customdata=click_customdata,
         hovertemplate=(
