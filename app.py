@@ -917,7 +917,7 @@ def draw_plot(plot_type: str, selected_orbs: List[dict], plot_prefix: str = ""):
                                     key=f"{widget_key_base}_ymax")
 
         fig = fig_radial(selected_orbs, plot_type, x_min, x_max, y_min, y_max)
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig, width='content')
         plt.close(fig)
         return
 
