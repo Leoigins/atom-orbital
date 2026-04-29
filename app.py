@@ -656,13 +656,11 @@ def fig_angular(orb: dict, squared: bool = False):
 
     if squared:
         title_kind = r"电子云角向分布 $|Y_l^m(\theta,\phi)|^2$"
-        radius_note = r"半径 $\propto |Y|^2$"
     else:
         title_kind = r"原子轨道角向分布 $|Y_l^m(\theta,\phi)|$"
-        radius_note = r"半径 $\propto |Y|$"
 
     ax.set_title(
-        f"{title_kind}\n(${orb['latex_label']}$, {plane} 平面, {radius_note})",
+        f"{title_kind}",
         fontsize=11, fontname='Noto Sans SC'
     )
     fig.tight_layout()
