@@ -651,8 +651,8 @@ def fig_angular(orb: dict, squared: bool = False):
     ax.set_ylim(-lim, lim)
     ax.set_aspect("equal")
     ax.tick_params(axis='both', labelsize=7.5)
-    ax.set_xlabel(f"${labels[0]}$", fontsize=5)
-    ax.set_ylabel(f"${labels[1]}$", fontsize=5)
+    ax.set_xlabel(f"${labels[0]}$", fontsize=7.5)
+    ax.set_ylabel(f"${labels[1]}$", fontsize=7.5)
 
     if squared:
         title_kind = r"电子云角向分布 $|Y_l^m(\theta,\phi)|^2$"
