@@ -924,19 +924,19 @@ def draw_plot(plot_type: str, selected_orbs: List[dict], plot_prefix: str = ""):
     orb = selected_orbs[0]
     if plot_type == "原子轨道角度分布图 |Y|-角度":
         fig = fig_angular(orb, squared=False)
-        st.pyplot(fig)
+        st.pyplot(fig, width='content')
         plt.close(fig)
     elif plot_type == "电子云角度分布图 |Y|²-角度":
         fig = fig_angular(orb, squared=True)
-        st.pyplot(fig)
+        st.pyplot(fig, width='content')
         plt.close(fig)
     elif plot_type == "原子轨道等值线图":
         fig = fig_contour(orb)
-        st.pyplot(fig)
+        st.pyplot(fig, width='content')
         plt.close(fig)
     elif plot_type == "原子轨道网格图":
         fig = fig_surface(orb)
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, width='content')
     elif plot_type == "电子云黑点图":
         npts = st.slider("采样点数", 5000, 60000, 20000, step=5000,
                          key=f"{plot_prefix}_cloud_npts")
