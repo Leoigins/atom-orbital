@@ -644,15 +644,15 @@ def fig_angular(orb: dict, squared: bool = False):
     ax.plot(px, py, '-', linewidth=2.2, zorder=5, color='#0099ff')
     ax.fill(px, py, alpha=0.35, color='#74a9ff', zorder=4)
 
-    ax.set_xticks(np.linspace(-lim, lim, 5))
-    ax.set_yticks(np.linspace(-lim, lim, 5))
+    ax.set_xticks(np.linspace(-lim, lim, 3))
+    ax.set_yticks(np.linspace(-lim, lim, 3))
     ax.grid(True, linestyle='--', alpha=0.25, zorder=1)
     ax.set_xlim(-lim, lim)
     ax.set_ylim(-lim, lim)
     ax.set_aspect("equal")
-
-    ax.set_xlabel(f"${labels[0]}$", fontsize=5)
-    ax.set_ylabel(f"${labels[1]}$", fontsize=5)
+    ax.tick_params(axis='both', labelsize=5)
+    ax.set_xlabel(f"${labels[0]}$", fontsize=11)
+    ax.set_ylabel(f"${labels[1]}$", fontsize=11)
 
     if squared:
         title_kind = r"电子云角向分布 $|Y_l^m(\theta,\phi)|^2$"
