@@ -1279,7 +1279,7 @@ def main():
     if "orbital_colors" not in st.session_state:
         st.session_state.orbital_colors = {}
 
-    left, center, right = st.columns([0.65, 1.05, 2.30])
+    left, center, right = st.columns([0.70, 1.00, 1.80])
 
     with left:
         st.subheader("原子选择与信息")
