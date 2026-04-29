@@ -1025,13 +1025,33 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
     energies_t = [transform(e) for e in energies]
     e_min_t = transform(e_min)
     e_max_t = transform(e_max)
-    e_pad_t = max((e_max_t - e_min_t) * 0.12, 0.8)
+
+    # 计算"上层"（处于断点之上的能级）之间的最小变换间距，用于自适应方框高度。
+    # 若有断点，"上层"指最高断点 high 之上的所有能级；否则为全部能级。
+    if breaks:
+        cutoff_high = max(high for _, high in breaks)
+        upper_t = [et for e, et in zip(energies, energies_t) if e >= cutoff_high]
+    else:
+        upper_t = list(energies_t)
+    if len(upper_t) >= 2:
+        diffs = [upper_t[i + 1] - upper_t[i] for i in range(len(upper_t) - 1)]
+        upper_min_gap_t = min(d for d in diffs if d > 1e-9) if any(d > 1e-9 for d in diffs) else (e_max_t - e_min_t)
+    else:
+        upper_min_gap_t = e_max_t - e_min_t if e_max_t > e_min_t else 0.5
+
+    # Y 轴留白：保证上层有足够的视觉展开空间。
+    # 取"变换跨度的 12%"和"上层最小间距的 3 倍"中的较大者，
+    # 这样即使变换后总跨度被压缩得很小，画布也不会塌缩。
+    e_pad_t = max((e_max_t - e_min_t) * 0.12, upper_min_gap_t * 3.0, 0.08)
 
     fig = go.Figure()
 
     x_axis = -1.05
-    y0_axis = e_min_t - e_pad_t * 0.45
-    y1_axis = max(0.20, e_max_t + e_pad_t * 0.65)
+    # 下方留白小（1s 不需要太多空间），上方留白大（让上层能级有充足的展开空间）
+    y0_axis = e_min_t - max((e_max_t - e_min_t) * 0.10, upper_min_gap_t * 1.0, 0.05)
+    # 顶部需要容纳 n=inf 参考线（在变换后坐标 transform(0.0) 处）
+    e_inf_t = transform(0.0)
+    y1_axis = max(e_max_t + e_pad_t * 0.65, e_inf_t + upper_min_gap_t * 0.5)
 
     # 能量轴
     fig.add_shape(
@@ -1100,7 +1120,10 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
     # 轨道方框横向位置。不同 l 略错开，同一 subshell 中的简并轨道展开。
     x_start = {0: -0.76, 1: -0.48, 2: -0.15, 3: 0.18}
     box_w = 0.095
-    box_h = max((e_max_t - e_min_t) * 0.020, 0.055)
+    # 方框高度自适应：必须小于"上层最小变换间距"，否则上层方框互相穿插重叠。
+    # 取上层最小间距的 40%，且不超过 0.055（避免在间距特别大时方框过高）。
+    box_h = min(0.055, upper_min_gap_t * 0.40)
+    box_h = max(box_h, 0.012)  # 下限，保证方框不会消失
     gap = 0.030
 
     click_x, click_y, click_text, click_customdata = [], [], [], []
@@ -1216,8 +1239,7 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
             xanchor="left",
         )
 
-    # n=inf 参考线（位于 E=0，需要变换到显示坐标）
-    e_inf_t = transform(0.0)
+    # n=inf 参考线（位于 E=0，已在前面计算 e_inf_t = transform(0.0)）
     fig.add_shape(
         type="line",
         x0=x_axis,
@@ -1257,7 +1279,7 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
             title="Orbital Energy / Eh",
             showgrid=False,
             zeroline=False,
-            range=[e_min_t - e_pad_t, max(0.30, e_max_t + e_pad_t)],
+            range=[y0_axis, y1_axis],
             fixedrange=False,
             tickmode="array",
             tickvals=tickvals,
