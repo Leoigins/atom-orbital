@@ -292,8 +292,25 @@ def element_orbital_records(symbol: str) -> List[dict]:
         if sub not in elem.orbitals:
             continue
         energy = elem.orbitals[sub].energy_hartree
-        for i, m in enumerate(M_ORDER_REAL[l]):
-            occupied = i < electron_count
+        m_order = M_ORDER_REAL[l]
+        n_orbitals = len(m_order)
+        # 按洪特规则 + 泡利不相容原理分配自旋：
+        # 先把所有 m 各填一个 ↑，剩下的电子再依次配对填 ↓。
+        n_up_per_orbital = [0] * n_orbitals
+        n_down_per_orbital = [0] * n_orbitals
+        remaining = max(0, min(electron_count, 2 * n_orbitals))
+        # 第一轮：每个轨道填一个 ↑
+        for i in range(min(remaining, n_orbitals)):
+            n_up_per_orbital[i] = 1
+        remaining -= min(remaining, n_orbitals)
+        # 第二轮：每个轨道再配一个 ↓
+        for i in range(min(remaining, n_orbitals)):
+            n_down_per_orbital[i] = 1
+
+        for i, m in enumerate(m_order):
+            n_up = n_up_per_orbital[i]
+            n_down = n_down_per_orbital[i]
+            occupied = (n_up + n_down) > 0
             records.append({
                 "symbol": symbol,
                 "n": n,
@@ -302,6 +319,8 @@ def element_orbital_records(symbol: str) -> List[dict]:
                 "subshell": sub,
                 "energy_hartree": energy,
                 "occupied": occupied,
+                "n_up": n_up,        # 自旋向上电子数 (0 或 1)
+                "n_down": n_down,    # 自旋向下电子数 (0 或 1)
                 "label": orbital_pretty_label(n, l, m),
                 "latex_label": get_orbital_symbol(n, l, m, style="latex"),
                 "key": orbital_key(symbol, n, l, m),
@@ -1154,9 +1173,12 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
     marker_fill_colors = []   # 填充颜色
     marker_symbols = []       # 'square' (占据/选中) 或 'square-open' (未占据)
     marker_sizes = []         # 像素大小
+    arrow_texts = []          # 方块内的自旋箭头文字
+    arrow_font_sizes = []     # 箭头字号（双箭头时稍小）
 
-    BOX_PIXEL_SIZE = 18       # 方块在屏幕上的边长（像素），始终保持正方形
-    BOX_PIXEL_SIZE_SELECTED = 22  # 选中时稍大
+    BOX_PIXEL_SIZE = 22       # 方块在屏幕上的边长（像素），需容纳 ↑↓ 双箭头
+    BOX_PIXEL_SIZE_SELECTED = 26  # 选中时稍大
+    ARROW_COLOR = "#222222"   # 箭头颜色（深灰，在任何方块底色下都清晰可见）
 
     for g, energy_t in zip(groups, energies_t):
         n = g["n"]
@@ -1198,6 +1220,8 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
 
             selected = rec["key"] in selected_keys
             occupied = rec["occupied"]
+            n_up = rec.get("n_up", 0)
+            n_down = rec.get("n_down", 0)
 
             # 选中：红色加粗边框 + 稍大；占据：实心；未占据：空心
             edge_color = "#d62728" if selected else color
@@ -1207,21 +1231,37 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
             if occupied:
                 symbol = "square"
                 fill_color = (
-                    "rgba(214,95,158,0.55)" if n == 1 else
-                    "rgba(88,185,127,0.55)" if n == 2 else
-                    "rgba(255,107,107,0.55)" if n == 3 else
-                    "rgba(77,157,224,0.55)"
+                    "rgba(214,95,158,0.40)" if n == 1 else
+                    "rgba(88,185,127,0.40)" if n == 2 else
+                    "rgba(255,107,107,0.40)" if n == 3 else
+                    "rgba(77,157,224,0.40)"
                 )
             else:
                 # 未占据：空心方块（marker 内部透明，仅显示边框）
                 symbol = "square-open"
                 fill_color = "rgba(0,0,0,0)"
 
+            # 自旋箭头：按洪特规则填充，由 element_orbital_records 提前计算好
+            if n_up == 1 and n_down == 1:
+                arrow_text = "↑↓"
+                arrow_size = 11 if not selected else 13
+            elif n_up == 1 and n_down == 0:
+                arrow_text = "↑"
+                arrow_size = 14 if not selected else 16
+            elif n_up == 0 and n_down == 1:
+                arrow_text = "↓"
+                arrow_size = 14 if not selected else 16
+            else:
+                arrow_text = ""
+                arrow_size = 1
+
             marker_symbols.append(symbol)
             marker_colors.append(edge_color)
             marker_line_widths.append(edge_width)
             marker_fill_colors.append(fill_color)
             marker_sizes.append(size_px)
+            arrow_texts.append(arrow_text)
+            arrow_font_sizes.append(arrow_size)
 
             click_x.append(bx_center)
             click_y.append(energy_t)
@@ -1233,13 +1273,18 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
                 "已占据" if occupied else "未占据",
             ])
 
-    # 用 Scatter marker 绘制轨道方块。
-    # 关键：marker.size 单位是屏幕像素，因此方块在任何屏幕尺寸/缩放级别下都保持像素级正方形，
-    # 不受坐标系、Y 轴跨度的影响。同时该 trace 也承担点击事件的捕获。
+    # 用 Scatter marker 绘制轨道方块 + 自旋箭头。
+    # 关键：marker.size 和 textfont.size 都是屏幕像素，因此方块和箭头在任何屏幕尺寸/
+    # 缩放级别下都保持稳定外观，不受坐标系、Y 轴跨度的影响。
+    # 该 trace 同时承担点击事件的捕获（点击方块即触发选取）。
+    # 注意：text 字段被用作方块内显示的箭头，所以轨道名改放到 customdata[4] 中。
+    customdata_with_label = [
+        cd + [tx] for cd, tx in zip(click_customdata, click_text)
+    ]
     fig.add_trace(go.Scatter(
         x=click_x,
         y=click_y,
-        mode="markers",
+        mode="markers+text",
         marker=dict(
             size=marker_sizes,
             symbol=marker_symbols,
@@ -1249,10 +1294,16 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
                 width=marker_line_widths,
             ),
         ),
-        text=click_text,
-        customdata=click_customdata,
+        text=arrow_texts,
+        textposition="middle center",
+        textfont=dict(
+            size=arrow_font_sizes,
+            color=ARROW_COLOR,
+            family="Arial, sans-serif",
+        ),
+        customdata=customdata_with_label,
         hovertemplate=(
-            "轨道: %{text}<br>"
+            "轨道: %{customdata[4]}<br>"
             "子层: %{customdata[1]}<br>"
             "真实能量: %{customdata[2]:.4f} Eh<br>"
             "状态: %{customdata[3]}<br>"
@@ -1260,6 +1311,7 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
             "<extra></extra>"
         ),
         showlegend=False,
+        cliponaxis=False,  # 防止文字超出方块时被坐标轴裁切
     ))
 
     # n 壳层标注（用变换后坐标）
