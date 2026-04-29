@@ -924,11 +924,11 @@ def draw_plot(plot_type: str, selected_orbs: List[dict], plot_prefix: str = ""):
         return
 
     orb = selected_orbs[0]
-    if plot_type == "原子轨道角度分布图 |ψ|-角度":
+    if plot_type == "原子轨道角度分布图 |Y|-角度":
         fig = fig_angular(orb, squared=False)
         st.pyplot(fig, use_container_width=True)
         plt.close(fig)
-    elif plot_type == "电子云角度分布图 |ψ|²-角度":
+    elif plot_type == "电子云角度分布图 |Y|²-角度":
         fig = fig_angular(orb, squared=True)
         st.pyplot(fig, use_container_width=True)
         plt.close(fig)
