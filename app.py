@@ -995,9 +995,9 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
 
     # ====== 智能检测大能量间隙并构建坐标变换（断轴/压缩） ======
     # 规则：相邻 subshell 之间的间隙若超过总跨度的 GAP_THRESHOLD_RATIO，
-    # 则将该间隙在显示坐标上压缩 COMPRESS_RATIO（默认 90%）。
-    COMPRESS_RATIO = 0.90        # 压缩 90%，保留 10% 视觉间距
-    GAP_THRESHOLD_RATIO = 0.25   # 间隙占总跨度比例超过 25% 才压缩
+    # 则将该间隙在显示坐标上压缩 COMPRESS_RATIO（默认 96%）。
+    COMPRESS_RATIO = 0.96        # 压缩 96%，仅保留 4% 视觉间距，折叠区段更紧凑
+    GAP_THRESHOLD_RATIO = 0.05   # 间隙占总跨度比例超过 5% 即压缩，可同时折叠多个大间隙
 
     total_span = e_max - e_min if e_max > e_min else 1.0
     gap_threshold = total_span * GAP_THRESHOLD_RATIO
@@ -1087,12 +1087,21 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
 
     # ====== 在每个被压缩的间隙处绘制双斜线断轴标记 ======
     axis_span = y1_axis - y0_axis
-    slash_dx = 0.035                 # 斜线水平半宽
-    slash_dy = axis_span * 0.018     # 斜线垂直半高
-    slash_offset = axis_span * 0.014 # 两条斜线之间的距离
+    slash_dx = 0.035                          # 斜线水平半宽（X 方向，无需自适应）
+    # 默认斜线尺寸（用于较宽的折叠区）
+    default_slash_dy = axis_span * 0.018
+    default_slash_offset = axis_span * 0.014
 
     for low, high in breaks:
         y_break = transform((low + high) / 2)
+        # 折叠区在变换坐标系中实际剩余的视觉宽度
+        gap_visual = transform(high) - transform(low)
+
+        # 让双斜线和遮挡矩形不超过折叠区实际高度的 ~80%，
+        # 避免在很窄的折叠区斜线戳到上下相邻的能级线。
+        max_total_height = gap_visual * 0.80
+        slash_dy = min(default_slash_dy, max_total_height * 0.30)
+        slash_offset = min(default_slash_offset, max_total_height * 0.30)
 
         # 用白色矩形遮挡这一段纵轴
         fig.add_shape(
