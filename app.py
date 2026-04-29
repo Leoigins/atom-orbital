@@ -1226,37 +1226,33 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
 
 def adaptive_plot_layout(plot_types: List[str], selected_orbs: List[dict]):
     n = len(plot_types)
+
     if n == 0:
         st.info("请先在右侧选择 1–4 种可视化类型。")
         return
+
+    # 1 张图：单独显示
     if n == 1:
         draw_plot(plot_types[0], selected_orbs, plot_prefix="p0")
         return
+
+    # 2 张图：一行两列
     if n == 2:
         cols = st.columns(2)
         for i, p in enumerate(plot_types):
             with cols[i]:
                 draw_plot(p, selected_orbs, plot_prefix=f"p{i}")
         return
-    if n == 3:
-        cols = st.columns(2)
-        with cols[0]:
-            draw_plot(plot_types[0], selected_orbs, plot_prefix="p0")
-        with cols[1]:
-            draw_plot(plot_types[1], selected_orbs, plot_prefix="p1")
-        draw_plot(plot_types[2], selected_orbs, plot_prefix="p2")
-        return
-    cols1 = st.columns(2)
-    cols2 = st.columns(2)
-    with cols1[0]:
-        draw_plot(plot_types[0], selected_orbs, plot_prefix="p0")
-    with cols1[1]:
-        draw_plot(plot_types[1], selected_orbs, plot_prefix="p1")
-    with cols2[0]:
-        draw_plot(plot_types[2], selected_orbs, plot_prefix="p2")
-    with cols2[1]:
-        draw_plot(plot_types[3], selected_orbs, plot_prefix="p3")
 
+    # 3 或 4 张图：统一 2×2 网格，保证尺寸一致
+    cols_row1 = st.columns(2)
+    cols_row2 = st.columns(2)
+
+    grid_cols = [cols_row1[0], cols_row1[1], cols_row2[0], cols_row2[1]]
+
+    for i, p in enumerate(plot_types):
+        with grid_cols[i]:
+            draw_plot(p, selected_orbs, plot_prefix=f"p{i}")
 
 # ==========================================================================
 # 主页面
