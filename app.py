@@ -1,4 +1,3 @@
-
 import math
 import sys
 import random
@@ -944,6 +943,8 @@ def draw_plot(plot_type: str, selected_orbs: List[dict], plot_prefix: str = ""):
         st.plotly_chart(fig)
 
 
+
+
 def render_energy_diagram(records: List[dict], selected_keys: List[str]):
     """
     教材风格电子能级图（可点击选择轨道）。
@@ -953,6 +954,8 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
     - s/p/d/f 简并轨道横向展开；
     - 用户可直接点击方框上的透明 marker 来选择/取消选择轨道；
     - 选中的轨道用红色边框加粗显示。
+    - 自动检测 1s 与 2s 之间的大能量差，用双斜线折叠并压缩 90%，
+      避免上层轨道（n>=2）相互重叠。
     """
     if not records:
         st.info("暂无轨道数据。")
@@ -990,11 +993,45 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
     e_min, e_max = min(energies), max(energies)
     e_pad = max((e_max - e_min) * 0.12, 0.8)
 
+    # ====== 智能检测大能量间隙并构建坐标变换（断轴/压缩） ======
+    # 规则：相邻 subshell 之间的间隙若超过总跨度的 GAP_THRESHOLD_RATIO，
+    # 则将该间隙在显示坐标上压缩 COMPRESS_RATIO（默认 90%）。
+    COMPRESS_RATIO = 0.90        # 压缩 90%，保留 10% 视觉间距
+    GAP_THRESHOLD_RATIO = 0.25   # 间隙占总跨度比例超过 25% 才压缩
+
+    total_span = e_max - e_min if e_max > e_min else 1.0
+    gap_threshold = total_span * GAP_THRESHOLD_RATIO
+
+    # 找出所有需要压缩的间隙区间 [(low, high), ...]，按真实能量从低到高排序
+    breaks = []
+    for i in range(len(energies) - 1):
+        gap = energies[i + 1] - energies[i]
+        if gap > gap_threshold:
+            margin = gap * 0.05  # 两端各留 5% 边距，避免紧贴轨道
+            breaks.append((energies[i] + margin, energies[i + 1] - margin))
+
+    def transform(e: float) -> float:
+        """将真实能量映射到显示坐标（压缩 break 区间）。"""
+        y = e
+        for low, high in breaks:
+            if e >= high:
+                y -= (high - low) * COMPRESS_RATIO
+            elif e > low:
+                # 落在 break 区间内（一般不会有轨道在这里），线性压缩
+                y -= (e - low) * COMPRESS_RATIO
+        return y
+
+    # 各项坐标的变换后值
+    energies_t = [transform(e) for e in energies]
+    e_min_t = transform(e_min)
+    e_max_t = transform(e_max)
+    e_pad_t = max((e_max_t - e_min_t) * 0.12, 0.8)
+
     fig = go.Figure()
 
     x_axis = -1.05
-    y0_axis = e_min - e_pad * 0.45
-    y1_axis = max(0.20, e_max + e_pad * 0.65)
+    y0_axis = e_min_t - e_pad_t * 0.45
+    y1_axis = max(0.20, e_max_t + e_pad_t * 0.65)
 
     # 能量轴
     fig.add_shape(
@@ -1028,19 +1065,51 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
         font=dict(size=13, color="black"),
     )
 
+    # ====== 在每个被压缩的间隙处绘制双斜线断轴标记 ======
+    axis_span = y1_axis - y0_axis
+    slash_dx = 0.035                 # 斜线水平半宽
+    slash_dy = axis_span * 0.018     # 斜线垂直半高
+    slash_offset = axis_span * 0.014 # 两条斜线之间的距离
+
+    for low, high in breaks:
+        y_break = transform((low + high) / 2)
+
+        # 用白色矩形遮挡这一段纵轴
+        fig.add_shape(
+            type="rect",
+            x0=x_axis - slash_dx * 0.6,
+            x1=x_axis + slash_dx * 0.6,
+            y0=y_break - slash_offset - slash_dy * 0.3,
+            y1=y_break + slash_offset + slash_dy * 0.3,
+            fillcolor="white",
+            line=dict(width=0),
+            layer="above",
+        )
+        # 在白底之上叠加两条平行斜线（//）
+        for offset in (-slash_offset, slash_offset):
+            fig.add_shape(
+                type="line",
+                x0=x_axis - slash_dx,
+                x1=x_axis + slash_dx,
+                y0=y_break + offset - slash_dy,
+                y1=y_break + offset + slash_dy,
+                line=dict(color="black", width=2),
+                layer="above",
+            )
+
     # 轨道方框横向位置。不同 l 略错开，同一 subshell 中的简并轨道展开。
     x_start = {0: -0.76, 1: -0.48, 2: -0.15, 3: 0.18}
     box_w = 0.095
-    box_h = max((e_max - e_min) * 0.020, 0.055)
+    box_h = max((e_max_t - e_min_t) * 0.020, 0.055)
     gap = 0.030
 
     click_x, click_y, click_text, click_customdata = [], [], [], []
 
-    for g in groups:
+    for g, energy_t in zip(groups, energies_t):
         n = g["n"]
         l = g["l"]
         subshell = g["subshell"]
-        energy = g["energy"]
+        energy_real = g["energy"]
         members = g["members"]
         color = shell_colors.get(n, "#777777")
 
@@ -1048,13 +1117,13 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
         x0 = x_start.get(l, -0.50)
         x1 = x0 + total_w
 
-        # 水平能级线
+        # 水平能级线（用变换后坐标绘制）
         fig.add_shape(
             type="line",
             x0=x_axis,
             x1=max(x1 + 0.18, 0.55),
-            y0=energy,
-            y1=energy,
+            y0=energy_t,
+            y1=energy_t,
             line=dict(color="rgba(120,120,120,0.25)", width=1),
             layer="below",
         )
@@ -1062,7 +1131,7 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
         # subshell 标签
         fig.add_annotation(
             x=x0 - 0.075,
-            y=energy,
+            y=energy_t,
             text=subshell,
             showarrow=False,
             font=dict(size=12, color=color),
@@ -1073,8 +1142,8 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
         for i, rec in enumerate(members):
             bx0 = x0 + i * (box_w + gap)
             bx1 = bx0 + box_w
-            by0 = energy - box_h / 2
-            by1 = energy + box_h / 2
+            by0 = energy_t - box_h / 2
+            by1 = energy_t + box_h / 2
 
             selected = rec["key"] in selected_keys
             occupied = rec["occupied"]
@@ -1103,14 +1172,14 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
             )
 
             cx = (bx0 + bx1) / 2
-            cy = energy
+            cy = energy_t  # 点击点用变换后坐标
             click_x.append(cx)
             click_y.append(cy)
             click_text.append(rec["label"])
             click_customdata.append([
                 rec["key"],
                 rec["subshell"],
-                float(rec["energy_hartree"]),
+                float(rec["energy_hartree"]),  # tooltip 显示真实能量
                 "已占据" if occupied else "未占据",
             ])
 
@@ -1133,10 +1202,10 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
         showlegend=False,
     ))
 
-    # n 壳层标注
+    # n 壳层标注（用变换后坐标）
     shell_groups = {}
-    for g in groups:
-        shell_groups.setdefault(g["n"], []).append(g["energy"])
+    for g, e_t in zip(groups, energies_t):
+        shell_groups.setdefault(g["n"], []).append(e_t)
     for n, es in shell_groups.items():
         fig.add_annotation(
             x=0.70,
@@ -1147,25 +1216,32 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
             xanchor="left",
         )
 
-    # n=inf 参考线
+    # n=inf 参考线（位于 E=0，需要变换到显示坐标）
+    e_inf_t = transform(0.0)
     fig.add_shape(
         type="line",
         x0=x_axis,
         x1=0.75,
-        y0=0,
-        y1=0,
+        y0=e_inf_t,
+        y1=e_inf_t,
         line=dict(color="rgba(80,80,80,0.55)", width=1, dash="dash"),
         layer="below",
     )
     fig.add_annotation(
         x=0.72,
-        y=0,
+        y=e_inf_t,
         text="n = inf",
         showarrow=False,
         font=dict(size=11, color="gray"),
         xanchor="right",
         yanchor="bottom",
     )
+
+    # ====== Y 轴刻度：显示真实能量值，但位置用变换后坐标 ======
+    # 选取每条能级 + 0 作为刻度参考点，去重后排序
+    tick_reals = sorted(set([round(e, 4) for e in energies] + [0.0]))
+    tickvals = [transform(v) for v in tick_reals]
+    ticktext = [f"{v:g}" for v in tick_reals]
 
     fig.update_layout(
         title="电子能级图（点击方框选择轨道）",
@@ -1181,8 +1257,11 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
             title="Orbital Energy / Eh",
             showgrid=False,
             zeroline=False,
-            range=[e_min - e_pad, max(0.30, e_max + e_pad)],
+            range=[e_min_t - e_pad_t, max(0.30, e_max_t + e_pad_t)],
             fixedrange=False,
+            tickmode="array",
+            tickvals=tickvals,
+            ticktext=ticktext,
         ),
         height=620,
         margin=dict(l=10, r=10, t=45, b=20),
@@ -1220,6 +1299,7 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
         # 兼容旧版 Streamlit：不支持 on_select 时仍正常显示图，但无法点击选择。
         st.plotly_chart(fig, use_container_width=True)
         st.caption("当前 Streamlit 版本不支持 plotly 点击选择；请升级 Streamlit 或使用下方备用选择器。")
+
 
 
 def adaptive_plot_layout(plot_types: List[str], selected_orbs: List[dict]):
