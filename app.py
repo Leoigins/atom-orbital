@@ -702,55 +702,92 @@ def fig_angular(orb: dict, squared: bool = False):
     return fig
 
 
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 def fig_contour(orb: dict, extent: float = None):
     """轨道等值线图 Re[ψ]。红色表示正值，蓝色表示负值，黑色虚线为 ψ=0 节面。"""
-    A, B, psi, plane, labels, extent = evaluate_on_plane(
+    A, B, psi, plane, labels = evaluate_on_plane(
         orb["symbol"], orb["n"], orb["l"], orb["m"],
         extent=extent, ngrid=220
     )
+
     psi_real = np.real(psi)
 
     fig, ax = plt.subplots(figsize=(4.0, 4.0), dpi=85)
+
     vmax = np.max(np.abs(psi_real))
     if vmax < 1e-12:
         vmax = 1e-12
+
     num_levels = 12
     levels = np.linspace(-vmax, vmax, num_levels)
 
-    cf = ax.contourf(A, B, psi_real, levels=levels, cmap='RdBu_r', alpha=1)
+    cf = ax.contourf(A, B, psi_real, levels=levels, cmap="RdBu_r", alpha=1)
 
     # ψ=0 节面
-    ax.contour(A, B, psi_real, levels=[0], colors='black',
-               linestyles='dashed', linewidths=1.5)
+    ax.contour(
+        A, B, psi_real,
+        levels=[0],
+        colors="black",
+        linestyles="dashed",
+        linewidths=1.5
+    )
 
     # 细线等高线
     pos_lv = levels[levels > 0]
     neg_lv = levels[levels < 0]
-    if len(pos_lv) > 0:
-        ax.contour(A, B, psi_real, levels=pos_lv, colors='darkred',
-                   linestyles='solid', linewidths=0.3, alpha=0.7)
-    if len(neg_lv) > 0:
-        ax.contour(A, B, psi_real, levels=neg_lv, colors='darkblue',
-                   linestyles='solid', linewidths=0.3, alpha=0.7)
 
-    cbar = fig.colorbar(cf, ax=ax, shrink=0.9)
-    cbar.set_label('波函数值 ψ', fontsize=8)
+    if len(pos_lv) > 0:
+        ax.contour(
+            A, B, psi_real,
+            levels=pos_lv,
+            colors="darkred",
+            linestyles="solid",
+            linewidths=0.3,
+            alpha=0.7
+        )
+
+    if len(neg_lv) > 0:
+        ax.contour(
+            A, B, psi_real,
+            levels=neg_lv,
+            colors="darkblue",
+            linestyles="solid",
+            linewidths=0.3,
+            alpha=0.7
+        )
 
     ax.set_aspect("equal")
     ax.set_title(
         f"轨道等值线图",
-        fontname='Noto Sans SC', fontsize=8
+        fontname="Noto Sans SC",
+        fontsize=8
     )
-    ax.set_xlabel(f"${labels[0]} / a_0$", fontsize=5)
-    ax.set_ylabel(f"${labels[1]} / a_0$", fontsize=5)
+    ax.set_xlabel(f"{labels[0]} / a_0*", fontsize=5)
+    ax.set_ylabel(f"{labels[1]} / a_0*", fontsize=5)
     ax.grid(True, linestyle=':', alpha=0.5)
 
-    ax.text(0.02, 0.02,
-            "红色: 正值\n蓝色: 负值\n黑色虚线: 节面",
-            transform=ax.transAxes, fontsize=5,
-            fontname='Noto Sans SC', 
-            verticalalignment='bottom',
-            bbox=dict(facecolor='white', alpha=0.75, edgecolor='gray'))
+    ax.text(
+        0.02, 0.02,
+        "红色: 正值\\n蓝色: 负值\\n黑色虚线: 节面",
+        transform=ax.transAxes,
+        fontsize=5,
+        fontname="Noto Sans SC",
+        verticalalignment='bottom',
+        bbox=dict(facecolor='white', alpha=0.75, edgecolor='gray')
+    )
+
+    # 右侧刻度尺：高度与图片主体一致
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes(
+        "right",
+        size="4%",
+        pad=0.08
+    )
+
+    cbar = fig.colorbar(cf, cax=cax)
+    cbar.ax.tick_params(labelsize=7)
+    cbar.set_label("波函数值 ψ", fontsize=8)
 
     fig.tight_layout()
     return fig
