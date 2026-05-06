@@ -848,7 +848,7 @@ def fig_surface(orb: dict):
         cmin=-max_abs_psi, cmax=max_abs_psi,
         showscale=True, opacity=0.85,
         name='波函数',
-        colorbar=dict(title='ψ', thickness=18, len=1.0)
+        colorbar=dict(title='ψ', thickness=18, len=0.7)
     ))
 
     # 叠加黑色网格线（每隔一行/列画一次，降低渲染压力）
