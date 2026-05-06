@@ -771,8 +771,8 @@ def fig_contour(
         fontname="Noto Sans SC",
         fontsize=8
     )
-    ax.set_xlabel(f"{labels[0]} / $a_0$", fontsize=5)
-    ax.set_ylabel(f"{labels[1]} / $a_0$", fontsize=5)
+    ax.set_xlabel(f"{labels[0]} / $a_0$", fontsize=10)
+    ax.set_ylabel(f"{labels[1]} / $a_0$", fontsize=10)
 
     if x_min is not None and x_max is not None:
         ax.set_xlim(x_min, x_max)
