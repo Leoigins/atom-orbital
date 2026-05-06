@@ -704,7 +704,14 @@ def fig_angular(orb: dict, squared: bool = False):
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-def fig_contour(orb: dict, extent: float = None):
+def fig_contour(
+    orb: dict,
+    extent: float = None,
+    x_min: float = None,
+    x_max: float = None,
+    y_min: float = None,
+    y_max: float = None
+):
     """轨道等值线图 Re[ψ]。红色表示正值，蓝色表示负值，黑色虚线为 ψ=0 节面。"""
     result = evaluate_on_plane(
         orb["symbol"], orb["n"], orb["l"], orb["m"],
@@ -766,6 +773,13 @@ def fig_contour(orb: dict, extent: float = None):
     )
     ax.set_xlabel(f"{labels[0]} / $a_0$", fontsize=5)
     ax.set_ylabel(f"{labels[1]} / $a_0$", fontsize=5)
+
+    if x_min is not None and x_max is not None:
+        ax.set_xlim(x_min, x_max)
+
+    if y_min is not None and y_max is not None:
+        ax.set_ylim(y_min, y_max)
+    
     ax.grid(True, linestyle=':', alpha=0.5)
 
     ax.text(
