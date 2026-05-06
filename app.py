@@ -852,7 +852,7 @@ def fig_surface(orb: dict):
     ))
 
     # 叠加黑色网格线（每隔一行/列画一次，降低渲染压力）
-    for i in range(0, grid_size, 2):
+    for i in range(0, grid_size, 5):
         fig.add_trace(go.Scatter3d(
             x=Xs[i, :], y=Ys[i, :], z=Zs[i, :],
             mode='lines',
