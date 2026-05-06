@@ -764,8 +764,8 @@ def fig_contour(orb: dict, extent: float = None):
         fontname="Noto Sans SC",
         fontsize=8
     )
-    ax.set_xlabel(f"{labels[0]} / a_0*", fontsize=5)
-    ax.set_ylabel(f"{labels[1]} / a_0*", fontsize=5)
+    ax.set_xlabel(f"{labels[0]} / $a_0$", fontsize=5)
+    ax.set_ylabel(f"{labels[1]} / $a_0$", fontsize=5)
     ax.grid(True, linestyle=':', alpha=0.5)
 
     ax.text(
