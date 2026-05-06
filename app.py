@@ -953,10 +953,7 @@ def draw_plot(plot_type: str, selected_orbs: List[dict], plot_prefix: str = ""):
         widget_key_base = f"{plot_prefix}_{plot_type}_{orb_fingerprint}"
 
         with st.expander(f"⚙ {plot_type} - 轴范围控制", expanded=False):
-            # 注意：此处不能再用 st.columns()，因为 draw_plot 已经处于
-            # 顶层 columns（main 的 left/center/right）和中层 columns（adaptive_plot_layout）
-            # 的双重嵌套之中——Streamlit 限制 columns 嵌套最多 1 层（即 2 层深度）。
-            # 因此 4 个控件直接顺序排列。
+
             x_min = st.number_input("X 最小", value=0.0, format="%.3f",
                                     key=f"{widget_key_base}_xmin")
             x_max = st.number_input("X 最大", value=default_xmax, format="%.2f",
@@ -1004,7 +1001,50 @@ def draw_plot(plot_type: str, selected_orbs: List[dict], plot_prefix: str = ""):
         st.pyplot(fig, width='content')
         plt.close(fig)
     elif plot_type == "原子轨道等值线图":
-        fig = fig_contour(orb)
+        default_extent = estimate_extent(orb["symbol"], orb["subshell"])
+        default_extent = round(default_extent * 1.3, 1)
+
+        orb_fingerprint = "_".join(sorted(o["key"] for o in selected_orbs))
+        widget_key_base = f"{plot_prefix}_{plot_type}_{orb_fingerprint}"
+
+        with st.expander(f"⚙ {plot_type} - 轴范围控制", expanded=False):
+            x_min = st.number_input(
+                "X 最小",
+                value=-default_extent,
+                format="%.2f",
+                key=f"{widget_key_base}_x_min"
+            )
+
+            x_max = st.number_input(
+                "X 最大",
+                value=default_extent,
+                format="%.2f",
+                key=f"{widget_key_base}_x_max"
+            )
+
+            y_min = st.number_input(
+                "Y 最小",
+                value=-default_extent,
+                format="%.2f",
+                key=f"{widget_key_base}_y_min"
+            )
+
+            y_max = st.number_input(
+                "Y 最大",
+                value=default_extent,
+                format="%.2f",
+                key=f"{widget_key_base}_y_max"
+            )
+
+        fig = fig_contour(
+            orb,
+            extent=default_extent,
+            x_min=x_min,
+            x_max=x_max,
+            y_min=y_min,
+            y_max=y_max
+        )
+
         st.pyplot(fig, width='content')
         plt.close(fig)
     elif plot_type == "原子轨道网格图":
@@ -1016,21 +1056,7 @@ def draw_plot(plot_type: str, selected_orbs: List[dict], plot_prefix: str = ""):
         fig = fig_cloud(orb, npts=npts)
         st.plotly_chart(fig)
 
-
-
-
 def render_energy_diagram(records: List[dict], selected_keys: List[str]):
-    """
-    教材风格电子能级图（可点击选择轨道）。
-
-    - 纵轴为真实 orbital energy / Eh；
-    - 每个 subshell 画成一排小方框；
-    - s/p/d/f 简并轨道横向展开；
-    - 用户可直接点击方框上的透明 marker 来选择/取消选择轨道；
-    - 选中的轨道用红色边框加粗显示。
-    - 自动检测 1s 与 2s 之间的大能量差，用双斜线折叠并压缩 90%，
-      避免上层轨道（n>=2）相互重叠。
-    """
     if not records:
         st.info("暂无轨道数据。")
         return
@@ -1067,12 +1093,8 @@ def render_energy_diagram(records: List[dict], selected_keys: List[str]):
     e_min, e_max = min(energies), max(energies)
     e_pad = max((e_max - e_min) * 0.12, 0.8)
 
-    # ====== 智能检测大能量间隙并构建坐标变换（断轴/折叠） ======
-    # 策略：每个被识别为大间隙的区间，在变换后被替换为一个"固定视觉宽度"，
-    # 而不是按原间隙的某个百分比压缩。这样不论原间隙是 40 Eh 还是 400 Eh，
-    # 折叠后在画布中占的空间都一样紧凑，避免了"原间隙越大、折叠区仍越宽"的问题。
-    GAP_THRESHOLD_RATIO = 0.05   # 间隙占总跨度比例超过 5% 即压缩，可同时折叠多个大间隙
-    GAP_VISUAL_FACTOR = 1.5      # 折叠区视觉宽度 = 上层最小真实间距 × 此倍数
+    GAP_THRESHOLD_RATIO = 0.05   
+    GAP_VISUAL_FACTOR = 1.5      
 
     total_span = e_max - e_min if e_max > e_min else 1.0
     gap_threshold = total_span * GAP_THRESHOLD_RATIO
