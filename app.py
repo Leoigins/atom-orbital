@@ -1588,7 +1588,7 @@ def main():
             selected_names = []
             for rec in records:
                 if rec["key"] in st.session_state.selected_orbital_keys:
-                    selected_names.append(rec["label"])
+                    selected_names.append(f'${rec["latex_label"]}$')
             st.markdown("**已选轨道**：" + "，".join(selected_names))
 
         # 备用选择器：仅当 Plotly 点击选择在当前环境不可用时使用
@@ -1655,7 +1655,7 @@ def main():
         )
         st.session_state.selected_plot_types = selected_plot_types
 
-        selected_labels = ", ".join([f'{r["symbol"]} {r["label"]}' for r in selected_records])
+        selected_labels = ", ".join([f'{r["symbol"]} ${r["latex_label"]}$' for r in selected_records])
         st.markdown(f"**当前选中轨道**：{selected_labels}")
         if len(selected_records) > 1:
             st.caption("多轨道比较时仅显示三类径向相关图像。")
