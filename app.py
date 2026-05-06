@@ -848,7 +848,7 @@ def fig_surface(orb: dict):
         cmin=-max_abs_psi, cmax=max_abs_psi,
         showscale=True, opacity=0.85,
         name='波函数',
-        colorbar=dict(title='ψ', thickness=18, len=0.7)
+        colorbar=dict(title='ψ', thickness=18, len=1.0)
     ))
 
     # 叠加黑色网格线（每隔一行/列画一次，降低渲染压力）
@@ -875,7 +875,7 @@ def fig_surface(orb: dict):
     ))
 
     fig.update_layout(
-        title=f"轨道网格变形图  {orb['symbol']} {orb['label']}  ({plane} 平面, 缩放×{scale_factor:.2f})",
+        title=f"轨道网格变形图  {orb['symbol']}  ({plane} 平面, 缩放×{scale_factor:.2f})",
         scene=dict(
             xaxis_title=axis_labels['x'],
             yaxis_title=axis_labels['y'],
