@@ -706,11 +706,12 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 def fig_contour(orb: dict, extent: float = None):
     """轨道等值线图 Re[ψ]。红色表示正值，蓝色表示负值，黑色虚线为 ψ=0 节面。"""
-    A, B, psi, plane, labels = evaluate_on_plane(
+    result = evaluate_on_plane(
         orb["symbol"], orb["n"], orb["l"], orb["m"],
         extent=extent, ngrid=220
     )
-
+    
+    A, B, psi, plane, labels = result[:5]
     psi_real = np.real(psi)
 
     fig, ax = plt.subplots(figsize=(4.0, 4.0), dpi=85)
