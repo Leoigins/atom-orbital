@@ -930,7 +930,6 @@ def fig_cloud(orb: dict, npts: int = 20000):
     ))
 
     fig.update_layout(
-        title=f"电子云图 |ψ|²  {orb['symbol']} ${orb['latex_label']}$  (保留 {len(xk)} 点)",
         scene=dict(
             xaxis_title='x / a₀',
             yaxis_title='y / a₀',
